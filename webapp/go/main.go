@@ -124,7 +124,6 @@ func main() {
 	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
 	go func() {
 	log.Println(http.ListenAndServe("127.0.0.1:6060", nil)) //普通に起動の場合
-	log.Println(http.ListenAndServe("localhost:6060", nil)) //dockerの場合
 	}()
 
 	e := echo.New()
