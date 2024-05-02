@@ -92,7 +92,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
 	}
 
-	var user_livestream_reactions []*struct{ ID int64 }
+	var user_livestream_reactions []*int64
 	query := `
 	SELECT u.id FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
@@ -116,7 +116,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 	for _, user := range users {
 		var reactions int64
 		for _, r := range user_livestream_reactions {
-			if r.ID == user.ID {
+			if *r == user.ID {
 				reactions++
 			}
 		}
