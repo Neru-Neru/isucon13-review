@@ -94,7 +94,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 
 	var user_livestream_reactions []* struct{ID int64}
 	query := `
-	SELECT user.id FROM users u
+	SELECT u.id FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN reactions r ON r.livestream_id = l.id`
 	if err := tx.GetContext(ctx, &user_livestream_reactions, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -104,7 +104,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 	var user_livestream_livecomments []* struct{ID int64; tip int64}
 
 	query = `
-	SELECT user.id, IFNULL(SUM(l2.tip), 0) FROM users u
+	SELECT u.id, IFNULL(SUM(l2.tip), 0) FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN livecomments l2 ON l2.livestream_id = l.id`
 	if err := tx.GetContext(ctx, &user_livestream_livecomments, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
