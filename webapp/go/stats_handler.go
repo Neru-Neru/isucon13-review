@@ -102,12 +102,12 @@ func getUserStatisticsHandler(c echo.Context) error {
 	}
 
 	var user_livestream_livecomments []*struct{
-		ID       int64	`db:"id"`
-		totaltip int64	`db:"sum(tip)"`
+		id       int64	`db:"id"`
+		totaltip int64	`db:"totaltip"`
 	}
 
 	query = `
-	SELECT u.id, IFNULL(SUM(l2.tip), 0) FROM users u
+	SELECT u.id AS id, IFNULL(SUM(l2.tip), 0) AS totaltip FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN livecomments l2 ON l2.livestream_id = l.id
 	GROUP BY u.id`
@@ -127,7 +127,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 
 		var tips int64
 		for _, l := range user_livestream_livecomments {
-			if l.ID == user.ID {
+			if l.id == user.ID {
 				tips += l.totaltip
 			}
 		}
