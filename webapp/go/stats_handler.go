@@ -101,9 +101,9 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to select user_livestream_reactions table: "+err.Error())
 	}
 
-	var user_livestream_livecomments []*struct{
-		id       int64	`db:"id"`
-		totaltip int64	`db:"totaltip"`
+	var user_livestream_livecomments []*struct {
+		id       int64 `db:"id"`
+		totaltip int64 `db:"totaltip"`
 	}
 
 	query = `
