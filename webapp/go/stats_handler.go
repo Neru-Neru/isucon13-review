@@ -101,10 +101,10 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to select user_livestream_reactions table: "+err.Error())
 	}
 
-	var user_livestream_livecomments []*struct{ ID int64; TotalTip int64 }
+	var user_livestream_livecomments []*struct{ ID int64; totaltip int64 }
 
 	query = `
-	SELECT u.id, IFNULL(SUM(l2.tip), 0) AS TotalTip FROM users u
+	SELECT u.id, IFNULL(SUM(l2.tip), 0) AS totaltip FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN livecomments l2 ON l2.livestream_id = l.id
 	GROUP BY u.id`
@@ -125,7 +125,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 		var tips int64
 		for _, l := range user_livestream_livecomments {
 			if l.ID == user.ID {
-				tips += l.TotalTip
+				tips += l.totaltip
 			}
 		}
 
