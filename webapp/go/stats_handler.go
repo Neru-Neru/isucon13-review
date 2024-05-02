@@ -98,7 +98,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN reactions r ON r.livestream_id = l.id`
 	if err := tx.SelectContext(ctx, &user_livestream_reactions, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user_livestream_reactions table: "+err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to select user_livestream_reactions table: "+err.Error())
 	}
 
 	var user_livestream_livecomments []*struct{ ID int64; tip int64 }
@@ -107,8 +107,8 @@ func getUserStatisticsHandler(c echo.Context) error {
 	SELECT u.id, IFNULL(SUM(l2.tip), 0) FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN livecomments l2 ON l2.livestream_id = l.id`
-	if err := tx.GetContext(ctx, &user_livestream_livecomments, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user_livestream_livecomments table: "+err.Error())
+	if err := tx.SelectContext(ctx, &user_livestream_livecomments, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to select user_livestream_livecomments table: "+err.Error())
 	}
 
 	var ranking UserRanking
