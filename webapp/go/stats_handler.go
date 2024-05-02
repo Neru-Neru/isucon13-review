@@ -97,7 +97,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 	SELECT u.id FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
 	INNER JOIN reactions r ON r.livestream_id = l.id`
-	if err := tx.GetContext(ctx, &user_livestream_reactions, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err := tx.SelectContext(ctx, &user_livestream_reactions, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user_livestream_reactions table: "+err.Error())
 	}
 
