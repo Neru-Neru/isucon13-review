@@ -102,8 +102,8 @@ func getUserStatisticsHandler(c echo.Context) error {
 	}
 
 	var user_livestream_livecomments []*struct {
-		id       int64 `db:"id"`
-		totaltip int64 `db:"totaltip"`
+		ID       int64 `db:"id"`
+		TotalTip int64 `db:"totaltip"`
 	}
 
 	query = `
@@ -127,8 +127,8 @@ func getUserStatisticsHandler(c echo.Context) error {
 
 		var tips int64
 		for _, l := range user_livestream_livecomments {
-			if l.id == user.ID {
-				tips += l.totaltip
+			if l.ID == user.ID {
+				tips += l.TotalTip
 			}
 		}
 
