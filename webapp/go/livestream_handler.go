@@ -204,7 +204,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 
 		if len(livestreamIds) != 0 {
-			query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (?) ", livestreamIds)
+			query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (?) ORDER BY id DESC", livestreamIds)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 			}
