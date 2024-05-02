@@ -106,7 +106,8 @@ func getUserStatisticsHandler(c echo.Context) error {
 	query = `
 	SELECT u.id, IFNULL(SUM(l2.tip), 0) FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
-	INNER JOIN livecomments l2 ON l2.livestream_id = l.id`
+	INNER JOIN livecomments l2 ON l2.livestream_id = l.id
+	GROUP BY u.id`
 	if err := tx.SelectContext(ctx, &user_livestream_livecomments, query); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to select user_livestream_livecomments table: "+err.Error())
 	}
