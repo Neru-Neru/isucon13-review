@@ -500,7 +500,7 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	}
 
 	tags := make([]Tag, len(livestreamTagModels))
-	tagModels := []*TagModel{}
+	var tagModels []*TagModel
 	if err := tx.GetContext(ctx, &tagModels, "SELECT * FROM tags"); err != nil {
 		return Livestream{}, err
 	}
