@@ -92,7 +92,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
 	}
 
-	var user_livestream_reactions []* struct{ID int64}
+	var user_livestream_reactions []*struct{ ID int64 }
 	query := `
 	SELECT u.id FROM users u
 	INNER JOIN livestreams l ON l.user_id = u.id
@@ -101,7 +101,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user_livestream_reactions table: "+err.Error())
 	}
 
-	var user_livestream_livecomments []* struct{ID int64; tip int64}
+	var user_livestream_livecomments []*struct{ ID int64; tip int64 }
 
 	query = `
 	SELECT u.id, IFNULL(SUM(l2.tip), 0) FROM users u
