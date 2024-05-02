@@ -525,19 +525,6 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 		}
 	}
 
-	// for i := range livestreamTagModels {
-	// 	tagModel := TagModel{}
-	// 	if err := tx.GetContext(ctx, &tagModel, "SELECT * FROM tags WHERE id = ?", livestreamTagModels[i].TagID); err != nil {
-	// 		return Livestream{}, err
-	// 	}
-
-	// 	tags[i] = Tag{
-	// 		ID:   tagModel.ID,
-	// 		Name: tagModel.Name,
-	// 	}
-	// }
-
-
 	livestream := Livestream{
 		ID:           livestreamModel.ID,
 		Owner:        owner,
