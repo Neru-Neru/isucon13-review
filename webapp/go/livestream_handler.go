@@ -197,14 +197,22 @@ func searchLivestreamsHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get keyTaggedLivestreams: "+err.Error())
 		}
 
-		for _, keyTaggedLivestream := range keyTaggedLivestreams {
-			ls := LivestreamModel{}
-			if err := tx.GetContext(ctx, &ls, "SELECT * FROM livestreams WHERE id = ?", keyTaggedLivestream.LivestreamID); err != nil {
+		livestreamIds := make([]int64, len(keyTaggedLivestreams))
+		for i, keyTaggedLivestream := range keyTaggedLivestreams {
+			livestreamId := keyTaggedLivestream.LivestreamID
+			livestreamIds[i] = livestreamId
+		}
+
+		if len(livestreamIds) != 0 {
+			query, params, err := sqlx.In("SELECT * FROM livestreams WHERE id IN (?) ORDER BY id DESC", livestreamIds)
+			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 			}
-
-			livestreamModels = append(livestreamModels, &ls)
+			if err := tx.SelectContext(ctx, &livestreamModels, query, params...); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
+			}
 		}
+
 	} else {
 		// 検索条件なし
 		query := `SELECT * FROM livestreams ORDER BY id DESC`
@@ -500,15 +508,28 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 	}
 
 	tags := make([]Tag, len(livestreamTagModels))
-	for i := range livestreamTagModels {
-		tagModel := TagModel{}
-		if err := tx.GetContext(ctx, &tagModel, "SELECT * FROM tags WHERE id = ?", livestreamTagModels[i].TagID); err != nil {
+
+	tagIDs := make([]int64, len(livestreamTagModels))
+	for i, tag := range livestreamTagModels {
+		tagIDs[i] = tag.TagID
+	}
+
+	tagModels := make([]*TagModel, len(tagIDs))
+
+	if len(tagIDs) != 0 {
+		query, params, err := sqlx.In("SELECT * FROM tags WHERE id IN (?)", tagIDs)
+		if err != nil {
+			return Livestream{}, err
+		}
+		if err := tx.SelectContext(ctx, &tagModels, query, params...); err != nil {
 			return Livestream{}, err
 		}
 
-		tags[i] = Tag{
-			ID:   tagModel.ID,
-			Name: tagModel.Name,
+		for i, tag := range tagModels {
+			tags[i] = Tag{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
 		}
 	}
 
