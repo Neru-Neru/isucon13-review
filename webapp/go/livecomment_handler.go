@@ -426,17 +426,18 @@ func moderateHandler(c echo.Context) error {
 	}
 
 	// 一括削除
-	ids := make([]int64, 0, len(matchedNgwordsLivecommentsIDMap))
+	strIds := make([]string, 0, len(matchedNgwordsLivecommentsIDMap))
 	for id := range matchedNgwordsLivecommentsIDMap {
-		ids = append(ids, id)
+		strIds = append(strIds, strconv.FormatInt(id, 10))
 	}
 
-	query, args, err := sqlx.In("DELETE FROM livecomments WHERE id IN (?)", ids)
+	query := "DELETE FROM livecomments WHERE id IN ("
+	query += strings.Join(strIds, ",") + ")"
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
 	}
-	if _, err := tx.ExecContext(ctx, query, args); err != nil {
+	if _, err := tx.ExecContext(ctx, query); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error())
 	}
 
