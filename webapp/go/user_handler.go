@@ -442,7 +442,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		}
 		image = errorImage
 		if getIconErr != nil {
-			return User{}, err
+			return User{}, getIconErr
 		}
 	}
 	iconHash := sha256.Sum256(image)
