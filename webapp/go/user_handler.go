@@ -89,7 +89,7 @@ type PostIconResponse struct {
 
 func getIcon(userId int64) ([]byte, error) {
 	// アイコンファイルのパスを構築
-	iconPath := fmt.Sprintf("%s%s.png", iconsDir, userId)
+	iconPath := fmt.Sprintf("%s%d.png", iconsDir, userId)
 
 	// アイコンファイルを開く
 	file, err := os.Open(iconPath)
@@ -115,7 +115,7 @@ func getIcon(userId int64) ([]byte, error) {
 
 func postIcon(userId int64, image []byte) error {
 	// アイコンファイルのパスを構築
-	iconPath := fmt.Sprintf("%s%s.png", iconsDir, userId)
+	iconPath := fmt.Sprintf("%s%d.png", iconsDir, userId)
 
 	// アイコンファイルを開く
 	_, err := os.Open(iconPath)
