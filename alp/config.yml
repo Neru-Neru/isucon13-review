@@ -5,7 +5,6 @@ query_string: true # boolean
 output: count,4xx,5xx,method,uri,min,max,sum,avg,p99 # string(comma separated)
 
 matching_groups: # array
-  - /api/livestream/search
   - /api/livestream/[0-9]+/enter
   - /api/livestream/[0-9]+/report
   - /api/livestream/[0-9]+/ngwords
@@ -17,7 +16,9 @@ matching_groups: # array
   - /api/livestream/[0-9]+/livecomment
   - /api/livestream/[0-9]+/statistics
   - /api/livestream/[0-9]+
+  - /api/user/me
   - /api/user/.+/icon
   - /api/user/.+/statistics
   - /api/user/.+/theme
   - /api/user/.+/livestream
+  - /api/user/.+
