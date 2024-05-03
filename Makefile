@@ -56,7 +56,7 @@ slow-query:
 # alpでアクセスログを確認する
 .PHONY: alp
 alp:
-	sudo alp ltsv --file=$(NGINX_LOG) --config=$(ALP_CONF) > alp/alp.txt
+	sudo alp ltsv --file=$(NGINX_LOG) --config=$(ALP_CONF) -q --qs-ignore-values > alp/alp.txt
 	curl -X POST https://discord.com/api/webhooks/1164529073696018452/0NHZIkbcR37P50A8ZNScAPHkG_07FUWGdkdVGHtglP5mXbBDzRTy-l64_VVeO-QfPDfK  -F file=@alp/alp.txt
 
 # dsqでクエリログを確認する（入力データは/home/isucon/logs/querylog.txt）
