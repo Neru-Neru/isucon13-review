@@ -117,15 +117,6 @@ func postIcon(userId int64, image []byte) error {
 	// アイコンファイルのパスを構築
 	iconPath := fmt.Sprintf("%s%d.png", iconsDir, userId)
 
-	// アイコンファイルを開く
-	_, err := os.Open(iconPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// アイコンファイルが存在しない場合、エラーを返す
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
-		}
-	}
-
 	// 画像ファイルを作成し、データを書き込む
 	if err := ioutil.WriteFile(iconPath, image, 0644); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
