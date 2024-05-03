@@ -227,13 +227,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 	}
 
 	livestreams := make([]Livestream, len(livestreamModels))
-	// for i := range livestreamModels {
-	// 	livestream, err := fillLivestreamResponse(ctx, tx, *livestreamModels[i])
-	// 	if err != nil {
-	// 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill livestream: "+err.Error())
-	// 	}
-	// 	livestreams[i] = livestream
-	// }
+
 	if len(livestreamModels) != 0 {
 		livestreams, err = fillLivestreamListResponse(ctx, tx, livestreamModels)
 		if err != nil {
@@ -636,16 +630,5 @@ func fillLivestreamListResponse(ctx context.Context, tx *sqlx.Tx, livestreamMode
 		}
 	}
 
-	// livestream := Livestream{
-	// 	ID:           livestreamModel.ID,
-	// 	Owner:        owner,
-	// 	Title:        livestreamModel.Title,
-	// 	Tags:         tags,
-	// 	Description:  livestreamModel.Description,
-	// 	PlaylistUrl:  livestreamModel.PlaylistUrl,
-	// 	ThumbnailUrl: livestreamModel.ThumbnailUrl,
-	// 	StartAt:      livestreamModel.StartAt,
-	// 	EndAt:        livestreamModel.EndAt,
-	// }
 	return livestreams, nil
 }
