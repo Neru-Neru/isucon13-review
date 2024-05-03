@@ -2,22 +2,25 @@
 sort: sum # max|min|avg|sum|count|uri|method|max-body|min-body|avg-body|sum-body|p1|p50|p99|stddev
 reverse: true # boolean
 query_string: true # boolean
+qs_ignore_values: true # boolean
 output: count,4xx,5xx,method,uri,min,max,sum,avg,p99 # string(comma separated)
 
 matching_groups: # array
-  - /api/user/.+/icon
-  - /api/user/.+/statistics
-  - /api/user/.+/theme
-  - /api/user/.+/livestream
-  - /api/livestream/[0-9]+
-  - /api/livestream/[0-9]+/livecomment/[0-9]+/report
   - /api/livestream/[0-9]+/enter
   - /api/livestream/[0-9]+/report
   - /api/livestream/[0-9]+/ngwords
   - /api/livestream/[0-9]+/exit
   - /api/livestream/[0-9]+/moderate
   - /api/livestream/[0-9]+/reaction
-  - /api/livestream/[0-9]+/livecomment
+  - /api/livestream/[0-9]+/livecomment/[0-9]+/report
   - /api/livestream/[0-9]+/livecomment?limit=[0-9]+
+  - /api/livestream/[0-9]+/livecomment
   - /api/livestream/[0-9]+/statistics
-  - /api/livestream/search
+  - /api/livestream/[0-9]+
+  - /api/user/me
+  - /api/user/.+/icon
+  - /api/user/.+/statistics
+  - /api/user/.+/theme
+  - /api/user/.+/livestream
+  - /api/user/.+
+
