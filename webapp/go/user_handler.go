@@ -435,7 +435,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 	var image []byte
 	image, getIconErr := getIcon(userModel.ID)
-	if getIconErr != nil && getIconErr.Error() == "file not found" {
+	if getIconErr != nil {
 		errorImage, err := os.ReadFile(fallbackImage)
 		if err != nil {
 			return User{}, err
