@@ -442,18 +442,23 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
 		Image       []byte      `db:"image"`
 	}
 
-	queryStr := `
-	SELECT
-	u.id AS id, u.name AS name, u.display_name AS display_name, u.description AS description,
-	t.id AS "theme.id", t.user_id AS "theme.user_id", t.dark_mode AS "theme.dark_mode",
-	i.image AS image
-	FROM users u
-	LEFT JOIN themes t
-	ON u.ID = t.user_id
-	LEFT JOIN icons i
-	ON u.ID = i.user_id
-	WHERE u.ID IN (?)
-	`
+	type IconModel struct {
+		UserID int64  `db:"user_id"`
+		Image  []byte `db:"image"`
+	}
+
+	// queryStr := `
+	// SELECT
+	// u.id AS id, u.name AS name, u.display_name AS display_name, u.description AS description,
+	// t.id AS "theme.id", t.user_id AS "theme.user_id", t.dark_mode AS "theme.dark_mode",
+	// i.image AS image
+	// FROM users u
+	// LEFT JOIN themes t
+	// ON u.ID = t.user_id
+	// LEFT JOIN icons i
+	// ON u.ID = i.user_id
+	// WHERE u.ID IN (?)
+	// `
 
     // ユーザーIDのスライスを生成
     var userIDs []int64
@@ -462,36 +467,79 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
     }
 
     // SQLクエリを実行して結果を取得
-    var userResponseModels []*UserResponseModel
-	query, params, err := sqlx.In(queryStr, userIDs)
-	if err != nil {
+    // var userResponseModels []*UserResponseModel
+	// query, params, err := sqlx.In(queryStr, userIDs)
+	// if err != nil {
+	// 	return map[int64]User{}, err
+	// }
+	// if err = tx.SelectContext(ctx, &userResponseModels, query, params...); err != nil {
+	// 	return map[int64]User{}, err
+	// }
+
+	// users := make(map[int64]User)
+    // for _, userResponseModel := range userResponseModels {
+	// 	// icon_hashを設定
+	// 	var iconHash string
+    //     if userResponseModel.Image == nil {
+    //         image, err := os.ReadFile(fallbackImage)
+    //         if err != nil {
+	// 			return map[int64]User{}, err
+    //         }
+    //         iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+    //     } else {
+    //         iconHash = fmt.Sprintf("%x", sha256.Sum256(userResponseModel.Image))
+    //     }
+	// 	users[userResponseModel.ID] = User{
+	// 		ID:          userResponseModel.ID,
+	// 		Name:        userResponseModel.Name,
+	// 		DisplayName: userResponseModel.DisplayName,
+	// 		Description: userResponseModel.Description,
+	// 		Theme: Theme{
+	// 			ID:       userResponseModel.Theme.ID,
+	// 			DarkMode: userResponseModel.Theme.DarkMode,
+	// 		},
+	// 		IconHash: iconHash,
+	// 	}
+    // }
+	var themeModels []ThemeModel
+	var iconModels []IconModel
+	if err := tx.SelectContext(ctx, &themeModels, "SELECT * FROM themes WHERE user_id IN (?)", userIDs); err != nil {
 		return map[int64]User{}, err
 	}
-	if err = tx.SelectContext(ctx, &userResponseModels, query, params...); err != nil {
+	if err := tx.SelectContext(ctx, &iconModels, "SELECT * FROM icons WHERE user_id IN (?)", userIDs); err != nil {
 		return map[int64]User{}, err
 	}
 
+	themeMap := make(map[int64]ThemeModel)
+	iconMap := make(map[int64]IconModel)
+	for _, theme := range themeModels {
+		themeMap[theme.UserID] = theme
+	}
+	for _, icon := range iconModels {
+		iconMap[icon.UserID] = icon
+	}
+
 	users := make(map[int64]User)
-    for _, userResponseModel := range userResponseModels {
+	for _, userModel := range userModels {
 		// icon_hashを設定
 		var iconHash string
-        if userResponseModel.Image == nil {
+        if iconMap[userModel.ID].Image == nil {
             image, err := os.ReadFile(fallbackImage)
             if err != nil {
 				return map[int64]User{}, err
             }
             iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
         } else {
-            iconHash = fmt.Sprintf("%x", sha256.Sum256(userResponseModel.Image))
+            iconHash = fmt.Sprintf("%x", sha256.Sum256(iconMap[userModel.ID].Image))
         }
-		users[userResponseModel.ID] = User{
-			ID:          userResponseModel.ID,
-			Name:        userResponseModel.Name,
-			DisplayName: userResponseModel.DisplayName,
-			Description: userResponseModel.Description,
+		users[userModel.ID] = User{
+			ID:          userModel.ID,
+			Name:        userModel.Name,
+			DisplayName: userModel.DisplayName,
+			Description: userModel.Description,
 			Theme: Theme{
-				ID:       userResponseModel.Theme.ID,
-				DarkMode: userResponseModel.Theme.DarkMode,
+				ID:       themeMap[userModel.ID].ID,
+				DarkMode: themeMap[userModel.ID].DarkMode,
 			},
 			IconHash: iconHash,
 		}
