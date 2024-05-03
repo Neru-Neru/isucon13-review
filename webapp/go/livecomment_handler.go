@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -384,30 +385,65 @@ func moderateHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get NG words: "+err.Error())
 	}
 
+	// ライブコメント一覧取得
+	var livecomments []*LivecommentModel
+	if err := tx.SelectContext(ctx, &livecomments, "SELECT * FROM livecomments"); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
+	}
+
+	matchedNgwordsLivecommentsIDMap := make(map[int64]bool)
+
 	// NGワードにヒットする過去の投稿も全削除する
 	for _, ngword := range ngwords {
-		// ライブコメント一覧取得
-		var livecomments []*LivecommentModel
-		if err := tx.SelectContext(ctx, &livecomments, "SELECT * FROM livecomments"); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
+		for _, livecomment := range livecomments {
+			if int(livecomment.LivestreamID) != livestreamID {
+				continue
+			}
+			if strings.Contains(livecomment.Comment, ngword.Word) {
+				matchedNgwordsLivecommentsIDMap[livecomment.ID] = true
+			}
 		}
 
-		for _, livecomment := range livecomments {
-			query := `
-			DELETE FROM livecomments
-			WHERE
-			id = ? AND
-			livestream_id = ? AND
-			(SELECT COUNT(*)
-			FROM
-			(SELECT ? AS text) AS texts
-			INNER JOIN
-			(SELECT CONCAT('%', ?, '%')	AS pattern) AS patterns
-			ON texts.text LIKE patterns.pattern) >= 1;
-			`
-			if _, err := tx.ExecContext(ctx, query, livecomment.ID, livestreamID, livecomment.Comment, ngword.Word); err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error())
+		// for _, livecomment := range livecomments {
+		// 	query := `
+		// 	DELETE FROM livecomments
+		// 	WHERE
+		// 	id = ? AND
+		// 	livestream_id = ? AND
+		// 	(SELECT COUNT(*)
+		// 	FROM
+		// 	(SELECT ? AS text) AS texts
+		// 	INNER JOIN
+		// 	(SELECT CONCAT('%', ?, '%')	AS pattern) AS patterns
+		// 	ON texts.text LIKE patterns.pattern) >= 1;
+		// 	`
+		// 	if _, err := tx.ExecContext(ctx, query, livecomment.ID, livestreamID, livecomment.Comment, ngword.Word); err != nil {
+		// 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error())
+		// 	}
+		// }
+	}
+
+	if (len(matchedNgwordsLivecommentsIDMap) != 0) {
+		// 一括削除
+		strIds := make([]string, 0, len(matchedNgwordsLivecommentsIDMap))
+		for id := range matchedNgwordsLivecommentsIDMap {
+			strIds = append(strIds, strconv.FormatInt(id, 10))
+		}
+
+		query := "DELETE FROM livecomments WHERE id IN ("
+		for i, id := range strIds {
+			query += id
+			if i < len(strIds) - 1 {
+				query += ","
 			}
+		}
+		query += ")"
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
+		}
+		if _, err := tx.ExecContext(ctx, query); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error()+query)
 		}
 	}
 

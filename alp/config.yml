@@ -23,4 +23,3 @@ matching_groups: # array
   - /api/user/.+/theme
   - /api/user/.+/livestream
   - /api/user/.+
-
