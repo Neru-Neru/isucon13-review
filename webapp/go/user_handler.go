@@ -442,7 +442,7 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
 		Image       []byte      `db:"image"`
 	}
 
-	query := `
+	queryStr := `
         SELECT
             u.ID AS id,
             u.Name AS name,
@@ -468,8 +468,11 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
 
     // SQLクエリを実行して結果を取得
     var userResponseModels []*UserResponseModel
-	err := tx.SelectContext(ctx, &userResponseModels, query, userIDs)
+	query, params, err := sqlx.In(queryStr, userIDs)
 	if err != nil {
+		return map[int64]User{}, err
+	}
+	if err = tx.SelectContext(ctx, &userResponseModels, query, params...); err != nil {
 		return map[int64]User{}, err
 	}
 
