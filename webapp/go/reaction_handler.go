@@ -67,13 +67,20 @@ func getReactionsHandler(c echo.Context) error {
 	}
 
 	reactions := make([]Reaction, len(reactionModels))
-	for i := range reactionModels {
-		reaction, err := fillReactionResponse(ctx, tx, reactionModels[i])
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
-		}
+	// for i := range reactionModels {
+	// 	reaction, err := fillReactionResponse(ctx, tx, reactionModels[i])
+	// 	if err != nil {
+	// 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
+	// 	}
 
-		reactions[i] = reaction
+	// 	reactions[i] = reaction
+	// }
+
+	if len(reactionModels) != 0 {
+		reactions, err = fillReactionListResponse(ctx, tx, reactionModels)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction list: "+err.Error())
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -169,4 +176,50 @@ func fillReactionResponse(ctx context.Context, tx *sqlx.Tx, reactionModel Reacti
 	}
 
 	return reaction, nil
+}
+
+
+func fillReactionListResponse(ctx context.Context, tx *sqlx.Tx, reactionModels []ReactionModel) ([]Reaction, error) {
+	var reactionedUserIds []int64
+	for _, reactionModel := range reactionModels {
+		reactionedUserIds = append(reactionedUserIds, reactionModel.UserID)
+	}
+	livestreamId := reactionModels[0].LivestreamID
+
+	// リアクションをしたユーザ情報（複数ユーザ）を取得
+	reactionOwnerModels := []UserModel{}
+	query, params, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", reactionedUserIds)
+	if err != nil {
+		return []Reaction{}, err
+	}
+	if err := tx.SelectContext(ctx, &reactionOwnerModels, query, params...); err != nil {
+		return []Reaction{}, err
+	}
+	reactionOwnerMap, err := fillUserListResponse(ctx, tx, reactionOwnerModels)
+	if err != nil {
+		return []Reaction{}, err
+	}
+
+	// コメントされた配信情報（単一の配信）を取得
+	livestreamModel := LivestreamModel{}
+	if err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", livestreamId); err != nil {
+		return []Reaction{}, err
+	}
+	livestream, err := fillLivestreamResponse(ctx, tx, livestreamModel)
+	if err != nil {
+		return []Reaction{}, err
+	}
+
+	reactions := make([]Reaction, len(reactionModels))
+	for i, reactionModel := range reactionModels {
+		reactions[i] = Reaction{
+			ID:         reactionModel.ID,
+			EmojiName:  reactionModel.EmojiName,
+			User:       reactionOwnerMap[reactionModel.UserID],
+			Livestream: livestream,
+			CreatedAt:  reactionModel.CreatedAt,
+		}
+	}
+
+	return reactions, nil
 }
