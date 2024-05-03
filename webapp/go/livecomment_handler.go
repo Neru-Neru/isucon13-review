@@ -438,7 +438,7 @@ func moderateHandler(c echo.Context) error {
 			query += ","
 		}
 	}
-	query += ")"
+	query += ");"
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
