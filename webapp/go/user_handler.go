@@ -430,3 +430,75 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 	return user, nil
 }
+
+// 戻り値: ユーザIDをキーとしたユーザ情報のマップ
+func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel) (map[int64]User, error) {
+	type IconModel struct {
+		UserID int64  `db:"user_id"`
+		Image  []byte `db:"image"`
+	}
+
+    // ユーザーIDのスライスを生成
+    var userIDs []int64
+    for _, userModel := range userModels {
+        userIDs = append(userIDs, userModel.ID)
+    }
+
+	// ユーザーIDに紐づくテーマとアイコン情報を取得
+	var themeModels []ThemeModel
+	var iconModels []IconModel
+
+	query, params, err := sqlx.In("SELECT * FROM themes WHERE user_id IN (?)", userIDs)
+	if err != nil {
+		return map[int64]User{}, err
+	}
+	if err := tx.SelectContext(ctx, &themeModels, query, params...); err != nil {
+		return map[int64]User{}, err
+	}
+
+	query, params, err = sqlx.In("SELECT user_id, image FROM icons WHERE user_id IN (?)", userIDs)
+	if err != nil {
+		return map[int64]User{}, err
+	}
+	if err := tx.SelectContext(ctx, &iconModels, query, params...); err != nil {
+		return map[int64]User{}, err
+	}
+
+	// テーマとアイコン情報をユーザーIDをキーとしたマップに変換
+	themeMap := make(map[int64]ThemeModel)
+	iconMap := make(map[int64]IconModel)
+	for _, theme := range themeModels {
+		themeMap[theme.UserID] = theme
+	}
+	for _, icon := range iconModels {
+		iconMap[icon.UserID] = icon
+	}
+
+	users := make(map[int64]User)
+	for _, userModel := range userModels {
+		// icon_hashを設定
+		var iconHash string
+        if iconMap[userModel.ID].Image == nil {
+            image, err := os.ReadFile(fallbackImage)
+            if err != nil {
+				return map[int64]User{}, err
+            }
+            iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+        } else {
+            iconHash = fmt.Sprintf("%x", sha256.Sum256(iconMap[userModel.ID].Image))
+        }
+		users[userModel.ID] = User{
+			ID:          userModel.ID,
+			Name:        userModel.Name,
+			DisplayName: userModel.DisplayName,
+			Description: userModel.Description,
+			Theme: Theme{
+				ID:       themeMap[userModel.ID].ID,
+				DarkMode: themeMap[userModel.ID].DarkMode,
+			},
+			IconHash: iconHash,
+		}
+    }
+
+	return users, nil
+}
