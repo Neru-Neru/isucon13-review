@@ -425,26 +425,28 @@ func moderateHandler(c echo.Context) error {
 		// }
 	}
 
-	// 一括削除
-	strIds := make([]string, 0, len(matchedNgwordsLivecommentsIDMap))
-	for id := range matchedNgwordsLivecommentsIDMap {
-		strIds = append(strIds, strconv.FormatInt(id, 10))
-	}
-
-	query := "DELETE FROM livecomments WHERE id IN ("
-	for i, id := range strIds {
-		query += id
-		if i < len(strIds) - 1 {
-			query += ","
+	if (len(matchedNgwordsLivecommentsIDMap) != 0) {
+		// 一括削除
+		strIds := make([]string, 0, len(matchedNgwordsLivecommentsIDMap))
+		for id := range matchedNgwordsLivecommentsIDMap {
+			strIds = append(strIds, strconv.FormatInt(id, 10))
 		}
-	}
-	query += ")"
 
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
-	}
-	if _, err := tx.ExecContext(ctx, query); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error()+query)
+		query := "DELETE FROM livecomments WHERE id IN ("
+		for i, id := range strIds {
+			query += id
+			if i < len(strIds) - 1 {
+				query += ","
+			}
+		}
+		query += ")"
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
+		}
+		if _, err := tx.ExecContext(ctx, query); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error()+query)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
