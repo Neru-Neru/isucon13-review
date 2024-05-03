@@ -460,7 +460,7 @@ func fillLivecommentListResponse(ctx context.Context, tx *sqlx.Tx, livecommentMo
 	livestreamId := livecommentModels[0].LivestreamID
 
 	// コメントをした(?)ユーザ情報（複数ユーザ）を取得
-	commentOwnerModels := []*UserModel{}
+	commentOwnerModels := []UserModel{}
 	query, params, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", commentedUserIds)
 	if err != nil {
 		return []Livecomment{}, err

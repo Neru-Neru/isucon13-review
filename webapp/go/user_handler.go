@@ -432,7 +432,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 }
 
 // 戻り値: ユーザIDをキーとしたユーザ情報のマップ
-func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserModel) (map[int64]User, error) {
+func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []UserModel) (map[int64]User, error) {
 	type IconModel struct {
 		UserID int64  `db:"user_id"`
 		Image  []byte `db:"image"`
