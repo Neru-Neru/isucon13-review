@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -29,6 +30,7 @@ const (
 )
 
 var fallbackImage = "../img/NoImage.jpg"
+var iconsDir = "../icons/"
 
 type UserModel struct {
 	ID             int64  `db:"id"`
@@ -85,6 +87,53 @@ type PostIconResponse struct {
 	ID int64 `json:"id"`
 }
 
+func getIcon(userId int64) ([]byte, error) {
+	// アイコンファイルのパスを構築
+	iconPath := fmt.Sprintf("%s%s.png", iconsDir, userId)
+
+	// アイコンファイルを開く
+	file, err := os.Open(iconPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// アイコンファイルが存在しない場合、エラーを返す
+			return nil, errors.New("file not found")
+		}
+		// その他のエラーの場合、エラーを返す
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
+	}
+	defer file.Close()
+
+	// アイコンファイルを読み込み
+	iconBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		// アイコンファイルの読み込み中にエラーが発生した場合、エラーを返す
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
+	}
+
+	return iconBytes, nil
+}
+
+func postIcon(userId int64, image []byte) error {
+	// アイコンファイルのパスを構築
+	iconPath := fmt.Sprintf("%s%s.png", iconsDir, userId)
+
+	// アイコンファイルを開く
+	_, err := os.Open(iconPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// アイコンファイルが存在しない場合、エラーを返す
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
+		}
+	}
+
+	// 画像ファイルを作成し、データを書き込む
+	if err := ioutil.WriteFile(iconPath, image, 0644); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
+	}
+
+	return nil
+}
+
 func getIconHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -105,20 +154,21 @@ func getIconHandler(c echo.Context) error {
 	}
 
 	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.File(fallbackImage)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
-		}
+	image, getIconErr := getIcon(user.ID)
+	if getIconErr.Error() == "file not found" {
+		return c.File(fallbackImage)
+	}
+	if getIconErr != nil {
+		return getIconErr
 	}
 
 	return c.Blob(http.StatusOK, "image/jpeg", image)
 }
 
+var iconLastInsertId int64 = 0
+
 func postIconHandler(c echo.Context) error {
 	ctx := c.Request().Context()
-
 	if err := verifyUserSession(c); err != nil {
 		// echo.NewHTTPErrorが返っているのでそのまま出力
 		return err
@@ -134,32 +184,20 @@ func postIconHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to decode the request body as json")
 	}
 
-	tx, err := dbConn.BeginTxx(ctx, nil)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
-	}
-	defer tx.Rollback()
+	tx, _ := dbConn.BeginTxx(ctx, nil)
 
-	if _, err := tx.ExecContext(ctx, "DELETE FROM icons WHERE user_id = ?", userID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old user icon: "+err.Error())
+	postIconErr := postIcon(userID, req.Image)
+	if postIconErr != nil {
+		return postIconErr
 	}
-
-	rs, err := tx.ExecContext(ctx, "INSERT INTO icons (user_id, image) VALUES (?, ?)", userID, req.Image)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new user icon: "+err.Error())
-	}
-
-	iconID, err := rs.LastInsertId()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get last inserted icon id: "+err.Error())
-	}
+	iconLastInsertId += 1
 
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
-		ID: iconID,
+		ID: iconLastInsertId,
 	})
 }
 
