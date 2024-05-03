@@ -111,10 +111,6 @@ func reserveLivestreamHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get reservation_slots: "+err.Error())
 	}
 	for _, slot := range slots {
-		// var count int
-		// if err := tx.GetContext(ctx, &count, "SELECT slot FROM reservation_slots WHERE start_at = ? AND end_at = ?", slot.StartAt, slot.EndAt); err != nil {
-		// 	return echo.NewHTTPError(http.StatusInternalServerError, "failed to get reservation_slots: "+err.Error())
-		// }
 		count := int(slot.Slot)
 		c.Logger().Infof("%d ~ %d予約枠の残数 = %d\n", slot.StartAt, slot.EndAt, slot.Slot)
 		if count < 1 {
