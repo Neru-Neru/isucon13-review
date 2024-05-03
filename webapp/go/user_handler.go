@@ -430,3 +430,74 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 	return user, nil
 }
+
+// 戻り値: ユーザIDをキーとしたユーザ情報のマップ
+func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserModel) (map[int64]User, error) {
+	type UserResponseModel struct {
+		ID          int64       `db:"id"`
+		Name        string      `db:"name"`
+		DisplayName string      `db:"display_name"`
+		Description string      `db:"description"`
+		Theme       ThemeModel  `db:"theme"`
+		Image       []byte      `db:"image"`
+	}
+
+	query := `
+        SELECT
+            u.ID AS id,
+            u.Name AS name,
+            u.DisplayName AS display_name,
+            u.Description AS description,
+            t.ID AS theme.id,
+            t.DarkMode AS theme.dark_mode,
+			i.image AS image
+        FROM
+            users u
+        LEFT JOIN
+            themes t ON u.ID = t.user_id
+        LEFT JOIN
+            icons i ON u.ID = i.user_id
+        WHERE
+            u.ID IN (?)
+    `
+    // ユーザーIDのスライスを生成
+    var userIDs []int64
+    for _, userModel := range userModels {
+        userIDs = append(userIDs, userModel.ID)
+    }
+
+    // SQLクエリを実行して結果を取得
+    var userResponseModels []*UserResponseModel
+	err := tx.SelectContext(ctx, &userResponseModels, query, userIDs)
+	if err != nil {
+		return map[int64]User{}, err
+	}
+
+	users := make(map[int64]User)
+    for _, userResponseModel := range userResponseModels {
+		// icon_hashを設定
+		var iconHash string
+        if userResponseModel.Image == nil {
+            image, err := os.ReadFile(fallbackImage)
+            if err != nil {
+				return map[int64]User{}, err
+            }
+            iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+        } else {
+            iconHash = fmt.Sprintf("%x", sha256.Sum256(userResponseModel.Image))
+        }
+		users[userResponseModel.ID] = User{
+			ID:          userResponseModel.ID,
+			Name:        userResponseModel.Name,
+			DisplayName: userResponseModel.DisplayName,
+			Description: userResponseModel.Description,
+			Theme: Theme{
+				ID:       userResponseModel.Theme.ID,
+				DarkMode: userResponseModel.Theme.DarkMode,
+			},
+			IconHash: iconHash,
+		}
+    }
+
+	return users, nil
+}
