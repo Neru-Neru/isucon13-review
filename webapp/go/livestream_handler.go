@@ -614,13 +614,12 @@ func fillLivestreamListResponse(ctx context.Context, tx *sqlx.Tx, livestreamMode
 	// 配信情報を構築
 	livestreams := make([]Livestream, len(livestreamModels))
 	for i, livestreamModel := range livestreamModels {
-		tags := make([]Tag, len(livestreamTagMap[livestreamModel.ID]))
-		for _, livestreamTags := range livestreamTagMap {
-			for i, tagID := range livestreamTags {
-				tags[i] = Tag{
-					ID:   tagID,
-					Name: tagMap[tagID].Name,
-				}
+		tagIDList := livestreamTagMap[livestreamModel.ID]
+		tags := make([]Tag, len(tagIDList))
+		for _, tagID := range tagIDList {
+			tags[i] = Tag{
+				ID:   tagID,
+				Name: tagMap[tagID].Name,
 			}
 		}
 
