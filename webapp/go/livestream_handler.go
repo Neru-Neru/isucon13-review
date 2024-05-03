@@ -227,12 +227,18 @@ func searchLivestreamsHandler(c echo.Context) error {
 	}
 
 	livestreams := make([]Livestream, len(livestreamModels))
-	for i := range livestreamModels {
-		livestream, err := fillLivestreamResponse(ctx, tx, *livestreamModels[i])
+	// for i := range livestreamModels {
+	// 	livestream, err := fillLivestreamResponse(ctx, tx, *livestreamModels[i])
+	// 	if err != nil {
+	// 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill livestream: "+err.Error())
+	// 	}
+	// 	livestreams[i] = livestream
+	// }
+	if len(livestreamModels) != 0 {
+		livestreams, err = fillLivestreamListResponse(ctx, tx, livestreamModels)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill livestream: "+err.Error())
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill livestream list: "+err.Error())
 		}
-		livestreams[i] = livestream
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -545,7 +551,7 @@ func fillLivestreamResponse(ctx context.Context, tx *sqlx.Tx, livestreamModel Li
 }
 
 
-func fillLivestreamListResponse(ctx context.Context, tx *sqlx.Tx, livestreamModels []LivestreamModel) ([]Livestream, error) {
+func fillLivestreamListResponse(ctx context.Context, tx *sqlx.Tx, livestreamModels []*LivestreamModel) ([]Livestream, error) {
 	var userIds []int64
 	var livestreamIds []int64
 	for _, livestreamModel := range livestreamModels {
