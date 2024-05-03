@@ -442,24 +442,8 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
 		Image       []byte      `db:"image"`
 	}
 
-	queryStr := `
-        SELECT
-            u.ID AS id,
-            u.Name AS name,
-            u.DisplayName AS display_name,
-            u.Description AS description,
-            t.ID AS \"theme.id\",
-            t.DarkMode AS \"theme.dark_mode\",
-			i.image AS image
-        FROM
-            users u
-        LEFT JOIN
-            themes t ON u.ID = t.user_id
-        LEFT JOIN
-            icons i ON u.ID = i.user_id
-        WHERE
-            u.ID IN (?)
-    `
+	queryStr := "SELECT u.ID AS id, u.Name AS name, u.DisplayName AS display_name, u.Description AS description, t.ID AS \"theme.id\", t.DarkMode AS \"theme.dark_mode\", i.image AS image FROM users u LEFT JOIN themes t ON u.ID = t.user_id LEFT JOIN icons i ON u.ID = i.user_id WHERE u.ID IN (?)"
+
     // ユーザーIDのスライスを生成
     var userIDs []int64
     for _, userModel := range userModels {
