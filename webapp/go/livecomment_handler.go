@@ -432,7 +432,13 @@ func moderateHandler(c echo.Context) error {
 	}
 
 	query := "DELETE FROM livecomments WHERE id IN ("
-	query += strings.Join(strIds, ",") + ")"
+	for i, id := range strIds {
+		query += id
+		if i < len(strIds) - 1 {
+			query += ","
+		}
+	}
+	query += ")"
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
