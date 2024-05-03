@@ -431,12 +431,12 @@ func moderateHandler(c echo.Context) error {
 		ids = append(ids, id)
 	}
 
-	query, _, _ := sqlx.In("DELETE FROM livecomments WHERE id IN (?)", ids)
+	query, args, err := sqlx.In("DELETE FROM livecomments WHERE id IN (?)", ids)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
 	}
-	if _, err := tx.ExecContext(ctx, query, ids); err != nil {
+	if _, err := tx.ExecContext(ctx, query, args); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error())
 	}
 
