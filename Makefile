@@ -32,7 +32,7 @@ DATE:=$(shell date "+%H%M%S")
 
 # サーバーの環境構築　ツールのインストール、gitまわりのセットアップ
 .PHONY: setup
-setup: install-tools git-setup make-server-id-dir 
+setup: install-tools git-setup make-server-id-dir
 
 # 設定ファイルなどを取得してgit管理下に配置する
 .PHONY: get-conf
@@ -50,7 +50,7 @@ bench: check-server-id mv-logs build restart watch-service-log
 .PHONY: slow-query
 slow-query:
 	sudo pt-query-digest $(DB_SLOW_LOG) > slow-query.txt
-	curl -X POST https://discord.com/api/webhooks/1164529073696018452/0NHZIkbcR37P50A8ZNScAPHkG_07FUWGdkdVGHtglP5mXbBDzRTy-l64_VVeO-QfPDfK  -F file=@slow-query.txt	
+	curl -X POST https://discord.com/api/webhooks/1164529073696018452/0NHZIkbcR37P50A8ZNScAPHkG_07FUWGdkdVGHtglP5mXbBDzRTy-l64_VVeO-QfPDfK  -F file=@slow-query.txt
 
 
 # alpでアクセスログを確認する
@@ -63,7 +63,7 @@ alp:
 .PHONY: dsq
 dsq:
 	bash $(UTILS_PATH)/dsq/check_querylog.sh $(SQLITE_SLOW_LOG) > dsq.txt
-	curl -X POST https://discord.com/api/webhooks/1164529073696018452/0NHZIkbcR37P50A8ZNScAPHkG_07FUWGdkdVGHtglP5mXbBDzRTy-l64_VVeO-QfPDfK  -F file=@dsq.txt	
+	curl -X POST https://discord.com/api/webhooks/1164529073696018452/0NHZIkbcR37P50A8ZNScAPHkG_07FUWGdkdVGHtglP5mXbBDzRTy-l64_VVeO-QfPDfK  -F file=@dsq.txt
 
 # pprofで記録する
 .PHONY: pprof-record
@@ -224,7 +224,7 @@ mv-logs:
 	-sudo mv -f $(DB_SLOW_LOG) ~/logs/$(DATE)/slow-query.txt
 	-sudo mv -f $(NGINX_LOG) ~/logs/$(DATE)/access.txt
 	-sudo cp -f $(SQLITE_SLOW_LOG) ~/logs/$(DATE)/sqlite_slow_query.txt
-	-echo -n > $(SQLITE_SLOW_LOG)	
+	-echo -n > $(SQLITE_SLOW_LOG)
 
 .PHONY: watch-service-log
 watch-se:
