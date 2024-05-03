@@ -433,14 +433,14 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 // 戻り値: ユーザIDをキーとしたユーザ情報のマップ
 func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserModel) (map[int64]User, error) {
-	type UserResponseModel struct {
-		ID          int64       `db:"id"`
-		Name        string      `db:"name"`
-		DisplayName string      `db:"display_name"`
-		Description string      `db:"description"`
-		Theme       ThemeModel  `db:"theme"`
-		Image       []byte      `db:"image"`
-	}
+	// type UserResponseModel struct {
+	// 	ID          int64       `db:"id"`
+	// 	Name        string      `db:"name"`
+	// 	DisplayName string      `db:"display_name"`
+	// 	Description string      `db:"description"`
+	// 	Theme       ThemeModel  `db:"theme"`
+	// 	Image       []byte      `db:"image"`
+	// }
 
 	type IconModel struct {
 		UserID int64  `db:"user_id"`
@@ -503,10 +503,20 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
     // }
 	var themeModels []ThemeModel
 	var iconModels []IconModel
-	if err := tx.SelectContext(ctx, &themeModels, "SELECT * FROM themes WHERE user_id IN (?)", userIDs); err != nil {
+
+	query, params, err := sqlx.In("SELECT * FROM themes WHERE user_id IN (?)", userIDs)
+	if err != nil {
 		return map[int64]User{}, err
 	}
-	if err := tx.SelectContext(ctx, &iconModels, "SELECT * FROM icons WHERE user_id IN (?)", userIDs); err != nil {
+	if err := tx.SelectContext(ctx, &themeModels, query, params...); err != nil {
+		return map[int64]User{}, err
+	}
+
+	query, params, err = sqlx.In("SELECT * FROM icons WHERE user_id IN (?)", userIDs)
+	if err != nil {
+		return map[int64]User{}, err
+	}
+	if err := tx.SelectContext(ctx, &iconModels, query, params...); err != nil {
 		return map[int64]User{}, err
 	}
 
