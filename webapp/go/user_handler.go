@@ -448,8 +448,8 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
             u.Name AS name,
             u.DisplayName AS display_name,
             u.Description AS description,
-            t.ID AS theme.id,
-            t.DarkMode AS theme.dark_mode,
+            t.ID AS \"theme.id\",
+            t.DarkMode AS \"theme.dark_mode\",
 			i.image AS image
         FROM
             users u
