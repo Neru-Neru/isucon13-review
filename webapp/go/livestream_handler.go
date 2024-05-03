@@ -616,8 +616,8 @@ func fillLivestreamListResponse(ctx context.Context, tx *sqlx.Tx, livestreamMode
 	for i, livestreamModel := range livestreamModels {
 		tagIDList := livestreamTagMap[livestreamModel.ID]
 		tags := make([]Tag, len(tagIDList))
-		for _, tagID := range tagIDList {
-			tags[i] = Tag{
+		for j, tagID := range tagIDList {
+			tags[j] = Tag{
 				ID:   tagID,
 				Name: tagMap[tagID].Name,
 			}
