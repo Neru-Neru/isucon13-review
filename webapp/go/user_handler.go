@@ -146,13 +146,13 @@ func getIconHandler(c echo.Context) error {
 
 	var image []byte
 	image, getIconErr := getIcon(user.ID)
-	if getIconErr.Error() == "file not found" {
-		return c.File(fallbackImage)
-	}
+
 	if getIconErr != nil {
+		if getIconErr.Error() == "file not found" {
+			return c.File(fallbackImage)
+		}
 		return getIconErr
 	}
-
 	return c.Blob(http.StatusOK, "image/jpeg", image)
 }
 
