@@ -512,7 +512,7 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
 		return map[int64]User{}, err
 	}
 
-	query, params, err = sqlx.In("SELECT * FROM icons WHERE user_id IN (?)", userIDs)
+	query, params, err = sqlx.In("SELECT user_id, image FROM icons WHERE user_id IN (?)", userIDs)
 	if err != nil {
 		return map[int64]User{}, err
 	}
