@@ -8,6 +8,7 @@ matching_groups: # array
   - /api/user/.+/icon
   - /api/user/.+/statistics
   - /api/user/.+/theme
+  - /api/user/.+/livestream
   - /api/livestream/[0-9]+
   - /api/livestream/[0-9]+/livecomment/[0-9]+/report
   - /api/livestream/[0-9]+/enter
