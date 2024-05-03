@@ -438,13 +438,13 @@ func moderateHandler(c echo.Context) error {
 			query += ","
 		}
 	}
-	query += ");"
+	query += ")"
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
 	}
 	if _, err := tx.ExecContext(ctx, query); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete old livecomments that hit spams: "+err.Error()+query)
 	}
 
 	if err := tx.Commit(); err != nil {
