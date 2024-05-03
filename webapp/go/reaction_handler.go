@@ -67,14 +67,6 @@ func getReactionsHandler(c echo.Context) error {
 	}
 
 	reactions := make([]Reaction, len(reactionModels))
-	// for i := range reactionModels {
-	// 	reaction, err := fillReactionResponse(ctx, tx, reactionModels[i])
-	// 	if err != nil {
-	// 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
-	// 	}
-
-	// 	reactions[i] = reaction
-	// }
 
 	if len(reactionModels) != 0 {
 		reactions, err = fillReactionListResponse(ctx, tx, reactionModels)
