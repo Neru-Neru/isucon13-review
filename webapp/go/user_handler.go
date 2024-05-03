@@ -433,32 +433,10 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 
 // 戻り値: ユーザIDをキーとしたユーザ情報のマップ
 func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserModel) (map[int64]User, error) {
-	// type UserResponseModel struct {
-	// 	ID          int64       `db:"id"`
-	// 	Name        string      `db:"name"`
-	// 	DisplayName string      `db:"display_name"`
-	// 	Description string      `db:"description"`
-	// 	Theme       ThemeModel  `db:"theme"`
-	// 	Image       []byte      `db:"image"`
-	// }
-
 	type IconModel struct {
 		UserID int64  `db:"user_id"`
 		Image  []byte `db:"image"`
 	}
-
-	// queryStr := `
-	// SELECT
-	// u.id AS id, u.name AS name, u.display_name AS display_name, u.description AS description,
-	// t.id AS "theme.id", t.user_id AS "theme.user_id", t.dark_mode AS "theme.dark_mode",
-	// i.image AS image
-	// FROM users u
-	// LEFT JOIN themes t
-	// ON u.ID = t.user_id
-	// LEFT JOIN icons i
-	// ON u.ID = i.user_id
-	// WHERE u.ID IN (?)
-	// `
 
     // ユーザーIDのスライスを生成
     var userIDs []int64
@@ -466,41 +444,7 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
         userIDs = append(userIDs, userModel.ID)
     }
 
-    // SQLクエリを実行して結果を取得
-    // var userResponseModels []*UserResponseModel
-	// query, params, err := sqlx.In(queryStr, userIDs)
-	// if err != nil {
-	// 	return map[int64]User{}, err
-	// }
-	// if err = tx.SelectContext(ctx, &userResponseModels, query, params...); err != nil {
-	// 	return map[int64]User{}, err
-	// }
-
-	// users := make(map[int64]User)
-    // for _, userResponseModel := range userResponseModels {
-	// 	// icon_hashを設定
-	// 	var iconHash string
-    //     if userResponseModel.Image == nil {
-    //         image, err := os.ReadFile(fallbackImage)
-    //         if err != nil {
-	// 			return map[int64]User{}, err
-    //         }
-    //         iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
-    //     } else {
-    //         iconHash = fmt.Sprintf("%x", sha256.Sum256(userResponseModel.Image))
-    //     }
-	// 	users[userResponseModel.ID] = User{
-	// 		ID:          userResponseModel.ID,
-	// 		Name:        userResponseModel.Name,
-	// 		DisplayName: userResponseModel.DisplayName,
-	// 		Description: userResponseModel.Description,
-	// 		Theme: Theme{
-	// 			ID:       userResponseModel.Theme.ID,
-	// 			DarkMode: userResponseModel.Theme.DarkMode,
-	// 		},
-	// 		IconHash: iconHash,
-	// 	}
-    // }
+	// ユーザーIDに紐づくテーマとアイコン情報を取得
 	var themeModels []ThemeModel
 	var iconModels []IconModel
 
@@ -520,6 +464,7 @@ func fillUserListResponse(ctx context.Context, tx *sqlx.Tx, userModels []*UserMo
 		return map[int64]User{}, err
 	}
 
+	// テーマとアイコン情報をユーザーIDをキーとしたマップに変換
 	themeMap := make(map[int64]ThemeModel)
 	iconMap := make(map[int64]IconModel)
 	for _, theme := range themeModels {
