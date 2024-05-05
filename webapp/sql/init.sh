@@ -69,5 +69,5 @@ mysql -u"$ISUCON_DB_USER" \
 		"$ISUCON_DB_NAME" < initial_livecomments.sql
 
 bash ../pdns/init_zone.sh
-bash ../init_icons.sh
+bash ./init_icons.sh
 
