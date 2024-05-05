@@ -117,14 +117,12 @@ func getIconHandler(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
 			}
 		}
-	} else {
-			// DBから取得できた場合，iconsディレクトリに画像を保存
-			err = os.WriteFile("../icons/" + strconv.FormatInt(user.ID, 10) + ".jpg", image, 0644);
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "failed to set user icon: "+err.Error())
-			}
+		// DBから取得できた場合，iconsディレクトリに画像を保存
+		err = os.WriteFile("../icons/" + strconv.FormatInt(user.ID, 10) + ".jpg", image, 0644);
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to set user icon: "+err.Error())
+		}
 	}
-
 
 	return c.Blob(http.StatusOK, "image/jpeg", image)
 }
