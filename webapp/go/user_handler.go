@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -105,11 +106,21 @@ func getIconHandler(c echo.Context) error {
 	}
 
 	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.File(fallbackImage)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
+	// iconsディレクトリから取得を試みる
+	image, err = os.ReadFile("../icons/" + strconv.FormatInt(user.ID, 10) + ".png")
+	// ファイルが存在しない場合は，DBから取得
+	if err != nil {
+		if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", user.ID); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return c.File(fallbackImage)
+			} else {
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user icon: "+err.Error())
+			}
+		}
+		// DBから取得できた場合，iconsディレクトリに画像を保存
+		err = os.WriteFile("../icons/" + strconv.FormatInt(user.ID, 10) + ".jpg", image, 0644);
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to set user icon: "+err.Error())
 		}
 	}
 
@@ -156,6 +167,11 @@ func postIconHandler(c echo.Context) error {
 
 	if err := tx.Commit(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
+	}
+
+	err = os.WriteFile("../icons/" + strconv.FormatInt(iconID, 10) + ".png", req.Image, 0644);
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save icon: "+err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, &PostIconResponse{
@@ -405,13 +421,26 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	}
 
 	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return User{}, err
-		}
-		image, err = os.ReadFile(fallbackImage)
+	// iconsディレクトリから取得を試みる
+	image, err := os.ReadFile("../icons/" + strconv.FormatInt(userModel.ID, 10) + ".png")
+	// ファイルが存在しない場合は，DBから取得
+	if err != nil {
+		err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID);
 		if err != nil {
-			return User{}, err
+			// DBにも存在しない場合，NoImageを返す
+			if !errors.Is(err, sql.ErrNoRows) {
+				return User{}, err
+			}
+			image, err = os.ReadFile(fallbackImage)
+			if err != nil {
+				return User{}, err
+			}
+		} else {
+			// DBから取得できた場合，iconsディレクトリに画像を保存
+			err = os.WriteFile("../icons/" + strconv.FormatInt(userModel.ID, 10) + ".png", image, 0644);
+			if err != nil {
+				return User{}, err
+			}
 		}
 	}
 	iconHash := sha256.Sum256(image)
