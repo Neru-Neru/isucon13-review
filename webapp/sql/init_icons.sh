@@ -7,4 +7,4 @@ if test -f /home/isucon/env.sh; then
 	. /home/isucon/env.sh
 fi
 
-rm -f /webapp/icons/*
+rm -f /home/isucon/webapp/icons/*
