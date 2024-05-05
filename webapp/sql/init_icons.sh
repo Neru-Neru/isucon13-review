@@ -1,3 +1,10 @@
 #!/usr/bin/env bash
 
-rm -f ../icons/*
+set -eux
+cd $(dirname $0)
+
+if test -f /home/isucon/env.sh; then
+	. /home/isucon/env.sh
+fi
+
+rm -f /webapp/icons/*
